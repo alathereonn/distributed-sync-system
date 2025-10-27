@@ -1,6 +1,6 @@
-Tugas Individu 2 — Parallel and Distributed System
-Institut Teknologi Kalimantan — 2025
-
+Zakaria Fattawari
+11231092 — Informatika ITK
+Tugas Individu 2 — Parallel and Distributed System A
 Overview
 
 Distributed Sync System adalah sistem terdistribusi berbasis Raft Consensus Algorithm yang terdiri dari tiga service utama:
@@ -37,23 +37,46 @@ Commit log dan apply state machine
 
 Build & Run
 docker compose -f docker/docker-compose.yml up --build
-
+queue1  | 🏆 Node queue1 elected as LEADER for term 1!                                                                                                                                                                     
+node1   | Node node1 listening on 8000                                                                                                                                                                                     
+node1   | Node node1 memulai election di term 0
+node1   | 🏆 Node node1 elected as LEADER for term 1!                                                                                                                                                                      
+cache2  | Node cache2 listening on 8201
+cache1  | Node cache1 listening on 8200
+cache1  | Node cache1 memulai election di term 0                                                                                                                                                                           
+                                                                                                                                                                                                                           
+                                                                                                                                                                                                                           
+cache2  | 🏆 Node cache2 elected as LEADER for term 1!
 Cek logs secara live:
 docker compose -f docker/docker-compose.yml logs -f
 
+kalau mau Reset:
+docker compose -f docker/docker-compose.yml down -v  
+
 Step-by-Step Demo
-1Cek Health & Leader Lock Cluster
+Cek Health & Leader Lock Cluster
 curl http://localhost:8000/health
 curl http://localhost:8001/health
 curl http://localhost:8002/health
+
 role=2 → berarti node tersebut Leader
+Setelah ini, bisa pilih sesuai Leadernya siapa
+
 
 Test Acquire & Release Lock
 Acquire Lock
 $body = '{"key":"A","mode":"X","client_id":"client1"}'
+Invoke-WebRequest -Uri "http://localhost:8000/lock/acquire" -Method POST -ContentType "application/json" -Body $body
+$body = '{"key":"A","mode":"X","client_id":"client1"}'
+Invoke-WebRequest -Uri "http://localhost:8001/lock/acquire" -Method POST -ContentType "application/json" -Body $body
+$body = '{"key":"A","mode":"X","client_id":"client1"}'
 Invoke-WebRequest -Uri "http://localhost:8002/lock/acquire" -Method POST -ContentType "application/json" -Body $body
 
 Release Lock
+$body = '{"key":"A","client_id":"client1"}'
+Invoke-WebRequest -Uri "http://localhost:8000/lock/release" -Method POST -ContentType "application/json" -Body $body
+$body = '{"key":"A","client_id":"client1"}'
+Invoke-WebRequest -Uri "http://localhost:8001`/lock/release" -Method POST -ContentType "application/json" -Body $body
 $body = '{"key":"A","client_id":"client1"}'
 Invoke-WebRequest -Uri "http://localhost:8002/lock/release" -Method POST -ContentType "application/json" -Body $body
 
@@ -65,12 +88,22 @@ curl http://localhost:8102/health
 
 Enqueue (ke Leader Queue)
 $body = '{"key":"user:42","value":"hello"}'
+Invoke-WebRequest -Uri "http://localhost:8100/queue/enq" -Method POST -ContentType "application/json" -Body $body
+$body = '{"key":"user:42","value":"hello"}'
+Invoke-WebRequest -Uri "http://localhost:8101/queue/enq" -Method POST -ContentType "application/json" -Body $body
+$body = '{"key":"user:42","value":"hello"}'
 Invoke-WebRequest -Uri "http://localhost:8102/queue/enq" -Method POST -ContentType "application/json" -Body $body
 
 Dequeue
+Invoke-WebRequest -Uri "http://localhost:8100/queue/deq" -Method POST
+Invoke-WebRequest -Uri "http://localhost:8101/queue/deq" -Method POST
 Invoke-WebRequest -Uri "http://localhost:8102/queue/deq" -Method POST
 
 Ack Message
+$ack = '{"msg_id":"<MSG_ID_DARI_DEQ>"}'
+Invoke-WebRequest -Uri "http://localhost:8100/queue/ack" -Method POST -ContentType "application/json" -Body $ack
+$ack = '{"msg_id":"<MSG_ID_DARI_DEQ>"}'
+Invoke-WebRequest -Uri "http://localhost:8101/queue/ack" -Method POST -ContentType "application/json" -Body $ack
 $ack = '{"msg_id":"<MSG_ID_DARI_DEQ>"}'
 Invoke-WebRequest -Uri "http://localhost:8102/queue/ack" -Method POST -ContentType "application/json" -Body $ack
 
@@ -84,22 +117,41 @@ PUT Data
 $body = @'
 {"key":"user:42","val":{"name":"Arya","score":99}}
 '@
+Invoke-WebRequest -Uri "http://localhost:8200/cache/put" -Method POST -ContentType "application/json" -Body $body
+
+$body = @'
+{"key":"user:42","val":{"name":"Arya","score":99}}
+'@
 Invoke-WebRequest -Uri "http://localhost:8201/cache/put" -Method POST -ContentType "application/json" -Body $body
+
+$body = @'
+{"key":"user:42","val":{"name":"Arya","score":99}}
+'@
+Invoke-WebRequest -Uri "http://localhost:8202/cache/put" -Method POST -ContentType "application/json" -Body $body
 
 GET Data
 $body = @'
 {"key":"user:42"}
 '@
 Invoke-WebRequest -Uri "http://localhost:8200/cache/get" -Method POST -ContentType "application/json" -Body $body
+$body = @'
+{"key":"user:42"}
+'@
+Invoke-WebRequest -Uri "http://localhost:8201/cache/get" -Method POST -ContentType "application/json" -Body $body
+$body = @'
+{"key":"user:42"}
+'@
+Invoke-WebRequest -Uri "http://localhost:8202/cache/get" -Method POST -ContentType "application/json" -Body $body
+
 
 Metrics Monitoring
 Prometheus-style metrics tersedia di setiap service:
 # Lock Node
-curl http://localhost:8002/metrics
+http://localhost:8002/metrics
 # Queue Node
-curl http://localhost:8102/metrics
+http://localhost:8102/metrics
 # Cache Node
-curl http://localhost:8200/metrics 
+http://localhost:8200/metrics 
 
 Contoh output:
 raft_term 4

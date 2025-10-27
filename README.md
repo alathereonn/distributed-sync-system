@@ -2,7 +2,7 @@
 Zakaria Fattawari
 11231092 — Informatika ITK
 Tugas Individu 2 — Parallel and Distributed System A
-Link video Youtube:
+Link video Youtube: https://youtu.be/smnjEYT1LxM
 
 ## Distributed Sync System adalah sistem terdistribusi berbasis Raft Consensus Algorithm yang terdiri dari tiga service utama:
 1. Lock Node (Port 800x) → Distributed Lock Manager berbasis Raft.
@@ -151,3 +151,14 @@ raft_role 2
 queue_enq_total 5
 queue_deq_total 4
 cache_hits_total 2
+
+## Test Performa
+Single Node:
+docker compose -f docker/docker-compose.yml down -v
+docker run -p 8000:8000 docker-node1
+python perf_test.py
+
+Cluster Node:
+docker compose -f docker/docker-compose.yml down -v
+docker compose -f docker/docker-compose.yml up --build
+python perf_test.py

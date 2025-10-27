@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: Distributed Sync System
+  version: 0.1.0
+paths:
+  /lock/acquire:
+    post:
+      summary: Acquire lock (S/X)
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {key:{type:string}, mode:{type:string, enum:[S,X]}, client_id:{type:string}}, required:[key,mode,client_id]}}}
+      responses: {"200": {description: OK}}
+  /lock/release:
+    post:
+      summary: Release lock
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {key:{type:string}, client_id:{type:string}}, required:[key,client_id]}}}
+      responses: {"200": {description: OK}}
+  /queue/enq:
+    post:
+      summary: Enqueue
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {key:{type:string}, body:{type:object}}, required:[key,body]}}}
+      responses: {"200": {description: OK}}
+  /queue/deq:
+    post:
+      summary: Dequeue
+      responses: {"200": {description: OK}}
+  /queue/ack:
+    post:
+      summary: Ack message
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {msg_id:{type:string}}, required:[msg_id]}}}
+      responses: {"200": {description: OK}}
+  /cache/get:
+    post:
+      summary: Get cache
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {key:{type:string}}, required:[key]}}}
+      responses: {"200": {description: OK}}
+  /cache/put:
+    post:
+      summary: Put cache (write-invalidate)
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {key:{type:string}, val:{}}, required:[key,val]}}}
+      responses: {"200": {description: OK}}

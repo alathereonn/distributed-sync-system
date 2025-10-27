@@ -1,0 +1,207 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - raft_net
+
+  node1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: node1
+    environment:
+      NODE_ID: node1
+      HTTP_PORT: 8000
+      NODES: http://node1:8000,http://node2:8001,http://node3:8002
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+    command: ["python", "-m", "src.main_lock"]
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    volumes:
+      - node1:/data
+    networks:
+      - raft_net
+
+  node2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: node2
+    environment:
+      NODE_ID: node2
+      HTTP_PORT: 8001
+      NODES: http://node1:8000,http://node2:8001,http://node3:8002
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+    command: ["python", "-m", "src.main_lock"]
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+    volumes:
+      - node2:/data
+    networks:
+      - raft_net
+
+  node3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: node3
+    environment:
+      NODE_ID: node3
+      HTTP_PORT: 8002
+      NODES: http://node1:8000,http://node2:8001,http://node3:8002
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+    command: ["python", "-m", "src.main_lock"]
+    ports:
+      - "8002:8002"
+    depends_on:
+      - redis
+    volumes:
+      - node3:/data
+    networks:
+      - raft_net
+      
+  queue1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: queue1
+    environment:
+      NODE_ID: queue1
+      HTTP_PORT: 8100
+      NODES: http://queue1:8100,http://queue2:8101,http://queue3:8102
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+    command: ["python", "-m", "src.main_queue"]
+    ports:
+      - "8100:8100"
+    depends_on:
+      - redis
+    volumes:
+      - queue1:/data
+    networks:
+      - raft_net
+
+  queue2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: queue2
+    environment:
+      NODE_ID: queue2
+      HTTP_PORT: 8101
+      NODES: http://queue1:8100,http://queue2:8101,http://queue3:8102
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+    command: ["python", "-m", "src.main_queue"]
+    ports:
+      - "8101:8101"
+    depends_on:
+      - redis
+    volumes:
+      - queue2:/data
+    networks:
+      - raft_net
+
+  queue3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: queue3
+    environment:
+      NODE_ID: queue3
+      HTTP_PORT: 8102
+      NODES: http://queue1:8100,http://queue2:8101,http://queue3:8102
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+    command: ["python", "-m", "src.main_queue"]
+    ports:
+      - "8102:8102"
+    depends_on:
+      - redis
+    volumes:
+      - queue3:/data
+    networks:
+      - raft_net
+
+  cache1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cache1
+    environment:
+      NODE_ID: cache1
+      HTTP_PORT: 8200
+      NODES: http://cache1:8200,http://cache2:8201,http://cache3:8202
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+      CACHE_CAPACITY: 256
+    command: ["python","-m","src.main_cache"]
+    ports:
+      - "8200:8200"
+    depends_on: [redis]
+    volumes:
+      - cache1:/data
+    networks: [raft_net]
+
+  cache2:
+    image: docker-node1
+    container_name: cache2
+    environment:
+      NODE_ID: cache2
+      HTTP_PORT: 8201
+      NODES: http://cache1:8200,http://cache2:8201,http://cache3:8202
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+      CACHE_CAPACITY: 256
+    command: ["python","-m","src.main_cache"]
+    ports:
+      - "8201:8201"
+    depends_on: [redis]
+    volumes:
+      - cache2:/data
+    networks: [raft_net]
+
+  cache3:
+    image: docker-node1
+    container_name: cache3
+    environment:
+      NODE_ID: cache3
+      HTTP_PORT: 8202
+      NODES: http://cache1:8200,http://cache2:8201,http://cache3:8202
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /data
+      CACHE_CAPACITY: 256
+    command: ["python","-m","src.main_cache"]
+    ports:
+      - "8202:8202"
+    depends_on: [redis]
+    volumes:
+      - cache3:/data
+    networks: [raft_net]
+
+volumes:
+  node1:
+  node2:
+  node3:
+  queue1:
+  queue2:
+  queue3:
+  cache1:
+  cache2:
+  cache3:
+
+networks:
+  raft_net:
+    driver: bridge
+
+

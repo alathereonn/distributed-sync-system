@@ -1,0 +1,7 @@
+aiohttp==3.10.5
+uvloop==0.20.0
+aioredis==2.0.1
+pydantic==2.8.2
+prometheus-client==0.20.0
+pyyaml==6.0.2
+xxhash==3.4.1
